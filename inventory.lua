@@ -148,7 +148,7 @@ local make_craft_preview = function(formspec, player, context)
 	make_item_button(formspec, 5.75, 1.5, 1, craft.output)
 end
 
-sfinv.register_page("cg:craftguide", {
+sfinv.register_page("cg_plus:crafting_guide", {
 	title = "Crafting Guide",
 	get = function(self, player, context)
 		local formspec = {[[
