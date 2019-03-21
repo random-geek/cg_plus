@@ -1,5 +1,7 @@
 # Crafting Guide Plus
 
+![screenshot](screenshot.png)
+
 Crafting Guide Plus is a simple and intuitive crafting guide and auto-crafting mod for Minetest. CGP is compatible with
 Minetest Game and any other games that use sfinv. It was built mostly from the ground up, with some inspiration from
 jp's mod as well as Unified Inventory.
