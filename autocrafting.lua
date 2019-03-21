@@ -83,6 +83,19 @@ end
 cg.auto_craft = function(player, craft, num)
 	inv = player:get_inventory()
 
+	if not inv:is_empty("craft") then
+		-- Attempt to move items to the player's main inventory.
+		for idx, stack in ipairs(inv:get_list("craft")) do
+			if not stack:is_empty() then
+				stack = inv:add_item("main", stack)
+				inv:set_stack("craft", idx, stack)
+			end
+		end
+
+		-- Check again, and return if not all items were moved.
+		if not inv:is_empty("craft") then return end
+	end
+
 	if craft.width > inv:get_width("craft") or table.maxn(craft.items) > inv:get_size("craft") then return end
 
 	local width = craft.width == 0 and inv:get_width("craft") or craft.width
