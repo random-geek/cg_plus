@@ -1,0 +1,8 @@
+# Enable the option to automatically move items to the craft grid from a craft preview window.
+cg_plus_autocrafting (Autocrafting) bool true
+
+# Search for items by group when a search begins with "group:".
+cg_plus_group_search (Search by item groups) bool true
+
+# Limit the number of groups which can be searched for at once when group search is enabled.
+cg_plus_group_search_max (Group search max) int 5 1 100
