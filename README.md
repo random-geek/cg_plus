@@ -10,7 +10,7 @@ jp's mod as well as Unified Inventory.
 
 - "Intelligent" auto-crafting, or rather, automatic craft staging. This feature can be disabled if it is not wanted.
 - Group support, including group search and support for craft recipes requiring items in multiple groups.
-- Shaped and shapeless crafting recipes.
+- Shaped and shapeless crafting recipe previews of any size.
 - Fuel and cooking recipes, including fuel replacements and burning/cooking times.
 - Digging and digging by chance (item drop) previews.
 
