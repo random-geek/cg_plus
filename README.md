@@ -1,5 +1,7 @@
 # Crafting Guide Plus
 
+![screenshot](screenshot.png)
+
 Crafting Guide Plus is a simple and intuitive crafting guide and auto-crafting mod for Minetest. CGP is compatible with
 Minetest Game and any other games that use sfinv. It was built mostly from the ground up, with some inspiration from
 jp's mod as well as Unified Inventory.
@@ -8,7 +10,7 @@ jp's mod as well as Unified Inventory.
 
 - "Intelligent" auto-crafting, or rather, automatic craft staging. This feature can be disabled if it is not wanted.
 - Group support, including group search and support for craft recipes requiring items in multiple groups.
-- Shaped and shapeless crafting recipes.
+- Shaped and shapeless crafting recipe previews of any size.
 - Fuel and cooking recipes, including fuel replacements and burning/cooking times.
 - Digging and digging by chance (item drop) previews.
 
