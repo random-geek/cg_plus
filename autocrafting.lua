@@ -101,6 +101,7 @@ cg.auto_craft = function(player, craft, num)
 
 	if craft.width > inv:get_width("craft") or table.maxn(craft.items) > inv:get_size("craft") then return end
 
+	local invList = inv:get_list("main")
 	local width = craft.width == 0 and inv:get_width("craft") or craft.width
 	local stack, invCache
 	local groupCache = {}
@@ -114,7 +115,7 @@ cg.auto_craft = function(player, craft, num)
 			if not invCache then
 				invCache = {}
 
-				for _, stack in ipairs(inv:get_list("main")) do
+				for _, stack in ipairs(invList) do
 					if stack:get_count() > 0 then
 						add_or_create(invCache, stack:get_name(), stack:get_count())
 					end
