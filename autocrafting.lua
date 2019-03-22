@@ -139,3 +139,15 @@ cg.auto_craft = function(player, craft, num)
 		end
 	end
 end
+
+minetest.register_on_player_inventory_action(function(player, action, inventory, inventory_info)
+	-- Hide the autocrafting menu when the player drops an item.
+	if cg.autocrafting and inventory_info.listname == "main" then
+		local context = sfinv.get_or_create_context(player)
+
+		if context.cg_auto_menu then
+			context.cg_auto_menu = false
+			sfinv.set_player_inventory_formspec(player)
+		end
+	end
+end)
