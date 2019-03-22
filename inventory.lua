@@ -252,4 +252,8 @@ sfinv.register_page("cg_plus:crafting_guide", {
 		-- Update the formspec.
 		sfinv.set_player_inventory_formspec(player, context)
 	end,
+
+	on_leave = function(self, player, context)
+		if context.cg_auto_menu then context.cg_auto_menu = false end
+	end,
 })
