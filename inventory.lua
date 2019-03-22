@@ -174,7 +174,6 @@ sfinv.register_page("cg_plus:crafting_guide", {
 	on_player_receive_fields = function(self, player, context, fields)
 		if fields.cg_craft_close then
 			context.cg_selected_item = nil
-			context.cg_craft_page = nil
 			context.cg_auto_menu = false
 		elseif fields.cg_prev and context.cg_page then
 			context.cg_page = context.cg_page - 1
