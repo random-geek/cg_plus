@@ -93,7 +93,10 @@ cg.auto_craft = function(player, craft, num)
 		end
 
 		-- Check again, and return if not all items were moved.
-		if not inv:is_empty("craft") then return end
+		if not inv:is_empty("craft") then
+			minetest.chat_send_player(player:get_player_name(), cg.S("Item could not be crafted!"))
+			return
+		end
 	end
 
 	if craft.width > inv:get_width("craft") or table.maxn(craft.items) > inv:get_size("craft") then return end
