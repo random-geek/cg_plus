@@ -1,10 +1,20 @@
 local F = minetest.formspec_escape
 
-cg.update_filter = function(player, context, filter)
-	if (filter or "") == (context.cg_filter or "") then return end
+cg.update_filter = function(player, context, filter, force)
+	if not force and (filter or "") == context.cg_filter then return end
+
 	context.cg_page = 0
-	context.cg_filter = filter
-	cg.filter_items(player, filter)
+	context.cg_filter = filter or ""
+	cg.filter_items(player, context.cg_filter)
+end
+
+cg.update_selected_item = function(player, context, item, force)
+	if not force and item == context.cg_selected_item then return end
+
+	if item then context.cg_craft_page = 0 end
+
+	context.cg_selected_item = item
+	context.cg_auto_menu = false
 end
 
 local make_item_button = function(formspec, x, y, size, name)
@@ -188,7 +198,7 @@ sfinv.register_page("cg_plus:crafting_guide", {
 		elseif fields.cg_search or fields.key_enter_field == "cg_filter" then
 			cg.update_filter(player, context, fields.cg_filter)
 		elseif fields.cg_clear then
-			cg.update_filter(player, context, "")
+			cg.update_filter(player, context, "", true)
 		elseif fields.cg_auto_menu and cg.autocrafting then
 			if not context.cg_auto_menu then
 				-- Make sure the craft is valid, in case the client is sending fake formspec fields.
@@ -210,21 +220,16 @@ sfinv.register_page("cg_plus:crafting_guide", {
 					if item:sub(1, 6) == "group:" then
 						if cg.group_search then
 							cg.update_filter(player, context, item:gsub("/", ","))
-							context.cg_selected_item = nil
-							context.cg_auto_menu = false
+							cg.update_selected_item(player, context, nil)
 						elseif cg.group_stereotypes[item:sub(7)] then
-							context.cg_selected_item = cg.group_stereotypes[item:sub(7)]
-							context.cg_craft_page = 0
-							context.cg_auto_menu = false
+							cg.update_selected_item(player, context, cg.group_stereotypes[item:sub(7)])
 						end
-					elseif item ~= context.cg_selected_item then
-						context.cg_selected_item = item
-						context.cg_craft_page = 0
-						context.cg_auto_menu = false
+					else
+						cg.update_selected_item(player, context, item)
 					end
 
 					break
-				elseif field:sub(1, 8) == "cg_auto_" and cg.autocrafting and context.cg_auto_menu then
+				elseif field:sub(1, 8) == "cg_auto_" and context.cg_auto_menu then
 					-- No need to sanity check, we already did that when showing the autocrafting menu.
 					local num = tonumber(field:sub(9))
 
@@ -253,6 +258,6 @@ sfinv.register_page("cg_plus:crafting_guide", {
 	end,
 
 	on_leave = function(self, player, context)
-		if context.cg_auto_menu then context.cg_auto_menu = false end
+		context.cg_auto_menu = false
 	end,
 })
