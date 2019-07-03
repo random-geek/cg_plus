@@ -54,7 +54,8 @@ cg.build_item_list = function()
 
 	for item, def in pairs(minetest.registered_items) do
 		if def.description and def.description ~= "" and
-				minetest.get_item_group(item, "not_in_creative_inventory") == 0 then
+				minetest.get_item_group(item, "not_in_creative_inventory") == 0 and
+				minetest.get_item_group(item, "not_in_craft_guide") == 0 then
 			table.insert(cg.items_all.list, item)
 			cg.crafts[item] = minetest.get_all_craft_recipes(item) or {}
 		end
