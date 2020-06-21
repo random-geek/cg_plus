@@ -1,0 +1,17 @@
+# textdomain:cg_plus
+
+Item could not be crafted!=Non è stato possibile assemblare l'oggetto!
+Crafting=Assemblaggio
+Mixing=Miscelatura
+Cooking=Cottura
+Time: @1 s=Tempo: @1 s
+Fuel=Combustibile
+Digging=Scavando
+Digging@n(by chance)=Scavando@n(per probabilità)
+Any item in groups: @1=Qualsiasi oggetto nei gruppi: @1
+Any item in group: @1=Qualsiasi oggetto nel gruppo: @1
+Crafting Guide=Guida di Assemblaggio
+There are no recipes for this item.=Non c'è nessuna ricetta per questo oggetto.
+Craft this recipe=Assembla questa ricetta
+Craft @1 item=Assembla @1 oggetto
+Craft @1 items=Assembla @1 oggetti
