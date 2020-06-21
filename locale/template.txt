@@ -1,0 +1,17 @@
+# textdomain:cg_plus
+
+Item could not be crafted!=
+Crafting=
+Mixing=
+Cooking=
+Time: @1 s=
+Fuel=
+Digging=
+Digging@n(by chance)=
+Any item in groups: @1=
+Any item in group: @1=
+Crafting Guide=
+There are no recipes for this item.=
+Craft this recipe=
+Craft @1 item=
+Craft @1 items=
