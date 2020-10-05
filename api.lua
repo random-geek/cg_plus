@@ -1,6 +1,6 @@
 -- TODO: aliases?
 
-local get_drops = function(item, def)
+local function get_drops(item, def)
     local normalDrops = {}
     local randomDrops = {}
 
@@ -13,7 +13,9 @@ local get_drops = function(item, def)
         local dStack, dName, dCount
 
         for _, dropTable in ipairs(dropTables) do
-            if itemsLeft and itemsLeft <= 0 then break end
+            if itemsLeft and itemsLeft <= 0 then
+                break
+            end
 
             for _, dropItem in ipairs(dropTable.items) do
                 dStack = ItemStack(dropItem)
@@ -21,15 +23,20 @@ local get_drops = function(item, def)
                 dCount = dStack:get_count()
 
                 if dCount > 0 and dName ~= item then
-                    if #dropTable.items == 1 and dropTable.rarity == 1 and maxStart then
+                    if #dropTable.items == 1 and dropTable.rarity == 1
+                            and maxStart then
                         normalDrops[dName] = (normalDrops[dName] or 0) + dCount
 
                         if itemsLeft then
                             itemsLeft = itemsLeft - 1
-                            if itemsLeft <= 0 then break end
+                            if itemsLeft <= 0 then
+                                break
+                            end
                         end
                     else
-                        if itemsLeft then maxStart = false end
+                        if itemsLeft then
+                            maxStart = false
+                        end
 
                         randomDrops[dName] = (randomDrops[dName] or 0) + dCount
                     end
@@ -48,14 +55,16 @@ local get_drops = function(item, def)
     return normalDrops, randomDrops
 end
 
-cg.build_item_list = function()
+function cg.build_item_list()
     local startTime = minetest.get_us_time()
     cg.items_all.list = {}
 
     for item, def in pairs(minetest.registered_items) do
-        if def.description and def.description ~= "" and
-                minetest.get_item_group(item, "not_in_creative_inventory") == 0 and
-                minetest.get_item_group(item, "not_in_craft_guide") == 0 then
+        if def.description and def.description ~= ""
+                and minetest.get_item_group(item,
+                        "not_in_creative_inventory") == 0
+                and minetest.get_item_group(item,
+                        "not_in_craft_guide") == 0 then
             table.insert(cg.items_all.list, item)
             cg.crafts[item] = minetest.get_all_craft_recipes(item) or {}
         end
@@ -66,7 +75,11 @@ cg.build_item_list = function()
     for _, item in ipairs(cg.items_all.list) do
         def = minetest.registered_items[item]
 
-        fuel, decremented = minetest.get_craft_result({method = "fuel", width = 0, items = {ItemStack(item)}})
+        fuel, decremented = minetest.get_craft_result({
+            method = "fuel",
+            width = 0,
+            items = {ItemStack(item)}
+        })
 
         if fuel.time > 0 then
             table.insert(cg.crafts[item], {
@@ -83,22 +96,28 @@ cg.build_item_list = function()
             for dItem, dCount in pairs(normalDrops) do
                 if cg.crafts[dItem] then
                     table.insert(cg.crafts[dItem], {
-                            type = "digging",
-                            width = 0,
-                            items = {item},
-                            output = ItemStack({name = dItem, count = dCount}):to_string()
-                        })
+                        type = "digging",
+                        width = 0,
+                        items = {item},
+                        output = ItemStack({
+                            name = dItem,
+                            count = dCount
+                        }):to_string()
+                    })
                 end
             end
 
             for dItem, dCount in pairs(randomDrops) do
                 if cg.crafts[dItem] then
                     table.insert(cg.crafts[dItem], {
-                            type = "digging_chance",
-                            width = 0,
-                            items = {item},
-                            output = ItemStack({name = dItem, count = dCount}):to_string()
-                        })
+                        type = "digging_chance",
+                        width = 0,
+                        items = {item},
+                        output = ItemStack({
+                            name = dItem,
+                            count = dCount
+                        }):to_string()
+                    })
                 end
             end
         end
@@ -113,23 +132,29 @@ cg.build_item_list = function()
     table.sort(cg.items_all.list)
     cg.items_all.num_pages = math.ceil(#cg.items_all.list / cg.PAGE_ITEMS)
 
-    minetest.log("info", string.format("[cg_plus] Finished building item list in %.3f s.",
-            (minetest.get_us_time() - startTime) / 1000000))
+    minetest.log("info",
+        string.format(
+            "[cg_plus] Finished building item list in %.3f s.",
+            (minetest.get_us_time() - startTime) / 1000000
+        )
+    )
 end
 
-cg.filter_items = function(player, filter)
+function cg.filter_items(player, filter)
     local playerName = player:get_player_name()
+    local playerData = cg.player_data[playerName]
 
     if not filter or filter == "" then
-        cg.items_filtered[playerName] = nil
+        playerData.items = nil
         return
     end
 
-    cg.items_filtered[playerName] = {list = {}}
+    playerData.items = {list = {}}
 
+    filter = filter:lower()
     local groupFilter = string.sub(filter, 1, 6) == "group:" and filter:sub(7)
 
-    if groupFilter and cg.group_search then
+    if groupFilter and cg.GROUP_SEARCH then
         -- Search by group
         local groups = string.split(groupFilter, ",")
         local isInGroups
@@ -137,7 +162,7 @@ cg.filter_items = function(player, filter)
         for _, item in ipairs(cg.items_all.list) do
             isInGroups = true
 
-            for idx = 1, math.min(#groups, cg.group_search_max) do
+            for idx = 1, math.min(#groups, cg.GROUP_SEARCH_MAX) do
                 if minetest.get_item_group(item, groups[idx]) == 0 then
                     isInGroups = false
                     break
@@ -145,23 +170,28 @@ cg.filter_items = function(player, filter)
             end
 
             if isInGroups then
-                table.insert(cg.items_filtered[playerName].list, item)
+                table.insert(playerData.items.list, item)
             end
         end
     else
         -- Regular search
+        local langCode = playerData.lang_code
+
         for _, item in ipairs(cg.items_all.list) do
-            if item:lower():find(filter, 1, true) or
-                minetest.registered_items[item].description:lower():find(filter, 1, true) then
-                table.insert(cg.items_filtered[playerName].list, item)
+            if item:lower():find(filter, 1, true)
+                    or minetest.get_translated_string(langCode,
+                    minetest.registered_items[item].description)
+                        :lower():find(filter, 1, true) then
+                table.insert(playerData.items.list, item)
             end
         end
     end
 
-    cg.items_filtered[playerName].num_pages = math.ceil(#cg.get_item_list(player).list / cg.PAGE_ITEMS)
+    playerData.items.num_pages =
+            math.ceil(#cg.get_item_list(player).list / cg.PAGE_ITEMS)
 end
 
-cg.parse_craft = function(craft)
+function cg.parse_craft(craft)
     local type = craft.type
     local template = cg.craft_types[type] or {}
 
@@ -185,36 +215,50 @@ cg.parse_craft = function(craft)
     if template.get_grid_size then
         newCraft.grid_size = template.get_grid_size(craft)
     else
-        newCraft.grid_size = {x = width, y = math.ceil(table.maxn(craft.items) / width)}
+        newCraft.grid_size = {
+            x = width,
+            y = math.ceil(table.maxn(craft.items) / width)
+        }
     end
 
     if template.inherit_width then
         -- For shapeless recipes, there is no need to modify the item list.
         newCraft.items = craft.items
     else
-        -- The craft's width is not always the same as the grid size, so items need to be shifted around.
+        -- The craft's width is not always the same as the grid size, so items
+        -- need to be shifted around.
         for idx, item in pairs(craft.items) do
-            newCraft.items[idx + (newCraft.grid_size.x - width) * math.floor((idx - 1) / width)] = item
+            newCraft.items[idx + (newCraft.grid_size.x - width) *
+                    math.floor((idx - 1) / width)] = item
         end
     end
 
     return newCraft
 end
 
-cg.get_item_list = function(player)
-    return cg.items_filtered[player:get_player_name()] or cg.items_all
+function cg.get_item_list(player)
+    return cg.player_data[player:get_player_name()].items or cg.items_all
 end
 
-cg.register_craft_type = function(name, def)
+function cg.register_craft_type(name, def)
     cg.craft_types[name] = def
 end
 
-cg.register_group_stereotype = function(group, item)
+function cg.register_group_stereotype(group, item)
     cg.group_stereotypes[group] = item
 end
 
 minetest.register_on_mods_loaded(cg.build_item_list)
 
+minetest.register_on_joinplayer(function(player)
+    local playerName = player:get_player_name()
+    local langCode = minetest.get_player_information(playerName).lang_code
+
+    cg.player_data[playerName] = {
+        lang_code = langCode
+    }
+end)
+
 minetest.register_on_leaveplayer(function(player, timed_out)
-  cg.items_filtered[player:get_player_name()] = nil
+    cg.player_data[player:get_player_name()] = nil
 end)

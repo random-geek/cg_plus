@@ -1,8 +1,8 @@
-local add_or_create = function(t, i, n)
+local function add_or_create(t, i, n)
     t[i] = t[i] and t[i] + n or n
 end
 
-local get_group_item = function(invCache, groups)
+local function get_group_item(invCache, groups)
     local maxCount = 0
     local maxItem
     local isInGroups
@@ -26,11 +26,12 @@ local get_group_item = function(invCache, groups)
     return maxItem
 end
 
-cg.auto_get_craftable = function(player, craft)
+function cg.auto_get_craftable(player, craft)
     local inv = player:get_inventory():get_list("main")
     local invCache = {}
 
-    -- Create a cache of the inventory with itemName = count pairs. This speeds up searching for items.
+    -- Create a cache of the inventory with itemName = count pairs.
+    -- This speeds up searching for items.
     for _, stack in ipairs(inv) do
         if stack:get_count() > 0 then
             add_or_create(invCache, stack:get_name(), stack:get_count())
@@ -51,7 +52,8 @@ cg.auto_get_craftable = function(player, craft)
 
     local gMaxItem
 
-    -- For each group, find the item in that group from the player's inventory with the largest count.
+    -- For each group, find the item in that group from the player's inventory
+    -- with the largest count.
     for group, count in pairs(reqGroups) do
         gMaxItem = get_group_item(invCache, group:sub(7):split(","))
 
@@ -73,15 +75,16 @@ cg.auto_get_craftable = function(player, craft)
 
         -- We can't craft more than the stack_max of our ingredients.
         if minetest.registered_items[item].stack_max then
-            craftable = math.min(craftable, minetest.registered_items[item].stack_max)
+            craftable = math.min(craftable,
+                    minetest.registered_items[item].stack_max)
         end
     end
 
     return craftable
 end
 
-cg.auto_craft = function(player, craft, num)
-    inv = player:get_inventory()
+function cg.auto_craft(player, craft, num)
+    local inv = player:get_inventory()
 
     if not inv:is_empty("craft") then
         -- Attempt to move items to the player's main inventory.
@@ -94,12 +97,16 @@ cg.auto_craft = function(player, craft, num)
 
         -- Check again, and return if not all items were moved.
         if not inv:is_empty("craft") then
-            minetest.chat_send_player(player:get_player_name(), cg.S("Item could not be crafted!"))
+            minetest.chat_send_player(player:get_player_name(),
+                    cg.S("Item could not be crafted!"))
             return
         end
     end
 
-    if craft.width > inv:get_width("craft") or table.maxn(craft.items) > inv:get_size("craft") then return end
+    if craft.width > inv:get_width("craft")
+            or table.maxn(craft.items) > inv:get_size("craft") then
+        return
+    end
 
     local invList = inv:get_list("main")
     local width = craft.width == 0 and inv:get_width("craft") or craft.width
@@ -107,8 +114,10 @@ cg.auto_craft = function(player, craft, num)
     local groupCache = {}
 
     for idx, item in pairs(craft.items) do
-        -- Shift the indices so the items in the craft go to the right spots on the crafting grid.
-        idx = idx + (inv:get_width("craft") - width) * math.floor((idx - 1) / width)
+        -- Shift the indices so the items in the craft go to the right spots on
+        -- the crafting grid.
+        idx = (idx + (inv:get_width("craft") - width) *
+                math.floor((idx - 1) / width))
 
         if item:sub(1, 6) == "group:" then
             -- Create an inventory cache.
@@ -117,37 +126,43 @@ cg.auto_craft = function(player, craft, num)
 
                 for _, stack in ipairs(invList) do
                     if stack:get_count() > 0 then
-                        add_or_create(invCache, stack:get_name(), stack:get_count())
+                        add_or_create(invCache, stack:get_name(),
+                                stack:get_count())
                     end
                 end
             end
 
             -- Get the most plentiful item in the group.
             if not groupCache[item] then
-                groupCache[item] = get_group_item(invCache, item:sub(7):split(","))
+                groupCache[item] = get_group_item(invCache,
+                        item:sub(7):split(","))
             end
 
             -- Move the selected item.
             if groupCache[item] then
-                stack = inv:remove_item("main", ItemStack({name = groupCache[item], count = num}))
+                stack = inv:remove_item("main",
+                        ItemStack({name = groupCache[item], count = num}))
                 inv:set_stack("craft", idx, stack)
             end
         else
             -- Move the item.
-            stack = inv:remove_item("main", ItemStack({name = item, count = num}))
+            stack = inv:remove_item("main",
+                    ItemStack({name = item, count = num}))
             inv:set_stack("craft", idx, stack)
         end
     end
 end
 
-minetest.register_on_player_inventory_action(function(player, action, inventory, inventory_info)
-    -- Hide the autocrafting menu when the player drops an item.
-    if cg.autocrafting and inventory_info.listname == "main" then
-        local context = sfinv.get_or_create_context(player)
+minetest.register_on_player_inventory_action(
+    function(player, action, inventory, inventory_info)
+        -- Hide the autocrafting menu when the player drops an item.
+        if cg.AUTOCRAFTING and inventory_info.listname == "main" then
+            local context = sfinv.get_or_create_context(player)
 
-        if context.cg_auto_menu then
-            context.cg_auto_menu = false
-            sfinv.set_player_inventory_formspec(player)
+            if context.cg_auto_menu then
+                context.cg_auto_menu = false
+                sfinv.set_player_inventory_formspec(player)
+            end
         end
     end
-end)
+)

@@ -1,8 +1,8 @@
 cg = {
     PAGE_WIDTH = 8,
-    PAGE_ITEMS = 24,
+    PAGE_ITEMS = 32,
     items_all = {},
-    items_filtered = {},
+    player_data = {},
     crafts = {},
     craft_types = {},
     group_stereotypes = {},
@@ -10,18 +10,17 @@ cg = {
 
 local settings = minetest.settings
 
-cg.autocrafting = settings:get_bool("cg_plus_autocrafting", true)
-cg.group_search = settings:get_bool("cg_plus_group_search", true)
-cg.group_search_max = tonumber(settings:get("cg_plus_group_search_max")) or 5
+cg.AUTOCRAFTING = settings:get_bool("cg_plus_autocrafting", true)
+cg.GROUP_SEARCH = settings:get_bool("cg_plus_group_search", true)
+cg.GROUP_SEARCH_MAX = tonumber(settings:get("cg_plus_group_search_max")) or 5
 
 cg.S = minetest.get_translator("cg_plus")
 local F = minetest.formspec_escape
 
 local path = minetest.get_modpath("cg_plus")
-
 dofile(path .. "/api.lua")
 
-if cg.autocrafting then
+if cg.AUTOCRAFTING then
     dofile(path .. "/autocrafting.lua")
 end
 
@@ -42,7 +41,7 @@ cg.register_craft_type("normal", {
         else
             return {x = sideLen, y = sideLen}
         end
-    end,
+    end
 })
 
 cg.register_craft_type("shapeless", {
@@ -59,58 +58,61 @@ cg.register_craft_type("shapeless", {
             local sideLen = math.ceil(math.sqrt(numItems))
             return {x = sideLen, y = sideLen}
         end
-    end,
+    end
 })
 
 cg.register_craft_type("cooking", {
     description = F(cg.S("Cooking")),
     inherit_width = true,
-    arrow_icon = "cg_plus_arrow_small.png^cg_plus_icon_cooking.png",
+    arrow_icon = "cg_plus_arrow_bottom.png^cg_plus_icon_cooking.png",
 
     get_grid_size = function(craft)
         return {x = 1, y = 1}
     end,
 
     get_infotext = function(craft)
-        return minetest.colorize("#FFFF00", F(cg.S("Time: @1 s", craft.width or 0)))
-    end,
+        return minetest.colorize("#FFFF00",
+                F(cg.S("Time: @1 s", craft.width or 0)))
+    end
 })
 
 cg.register_craft_type("fuel", {
     description = F(cg.S("Fuel")),
     inherit_width = true,
-    arrow_icon = "cg_plus_arrow_small.png^cg_plus_icon_fuel.png",
+    arrow_icon = "cg_plus_arrow_bottom.png^cg_plus_icon_fuel.png",
 
     get_grid_size = function(craft)
         return {x = 1, y = 1}
     end,
 
     get_infotext = function(craft)
-        return minetest.colorize("#FFFF00", F(cg.S("Time: @1 s", craft.time or 0)))
-    end,
+        return minetest.colorize("#FFFF00",
+                F(cg.S("Time: @1 s", craft.time or 0)))
+    end
 })
 
 cg.register_craft_type("digging", {
     description = F(cg.S("Digging")),
     inherit_width = true,
-    arrow_icon = "cg_plus_arrow_small.png^cg_plus_icon_digging.png",
+    arrow_icon = "cg_plus_arrow_bottom.png^cg_plus_icon_digging.png",
 
     get_grid_size = function(craft)
         return {x = 1, y = 1}
-    end,
+    end
 })
 
 cg.register_craft_type("digging_chance", {
     description = F(cg.S("Digging@n(by chance)")),
     inherit_width = true,
-    arrow_icon = "cg_plus_arrow_small.png^cg_plus_icon_digging.png",
+    arrow_icon = "cg_plus_arrow_bottom.png^cg_plus_icon_digging.png",
 
     get_grid_size = function(craft)
         return {x = 1, y = 1}
-    end,
+    end
 })
 
-cg.register_group_stereotype("mesecon_conductor_craftable", "mesecons:wire_00000000_off")
+cg.register_group_stereotype("mesecon_conductor_craftable",
+        "mesecons:wire_00000000_off")
 
 if minetest.get_modpath("default") then
     cg.register_group_stereotype("stone", "default:stone")
