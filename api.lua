@@ -1,5 +1,5 @@
 -- TODO: aliases?
-
+local reg_crafts = {} --Skaapdev add support to register custom craft for type.
 local function get_drops(item, def)
     local normalDrops = {}
     local randomDrops = {}
@@ -129,6 +129,13 @@ function cg.build_item_list()
         end
     end
 
+    for item, recipes in pairs(reg_crafts) do --Skaapdev add support to register custom craft for type.
+        for _, recipe in ipairs(recipes) do
+            cg.crafts[item] = cg.crafts[item] or {}
+            table.insert(cg.crafts[item], recipe)
+        end
+    end --Skaapdev end
+
     table.sort(cg.items_all.list)
     cg.items_all.num_pages = math.ceil(#cg.items_all.list / cg.PAGE_ITEMS)
 
@@ -139,6 +146,16 @@ function cg.build_item_list()
         )
     )
 end
+
+cg.register_craft = function(type, result, items) --Skaapdev add support to register custom craft for type.
+    reg_crafts[items] = {}
+    table.insert(reg_crafts[items], {
+        type = type,
+        width = 1,
+        items = items,
+        output = result,
+    })
+end --Skaapdev end
 
 function cg.filter_items(player, filter)
     local playerName = player:get_player_name()
