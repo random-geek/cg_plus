@@ -147,14 +147,23 @@ function cg.build_item_list()
     )
 end
 
-cg.register_craft = function(type, result, items) --Skaapdev add support to register custom craft for type.
-    reg_crafts[items] = {}
-    table.insert(reg_crafts[items], {
-        type = type,
-        width = 1,
-        items = items,
-        output = result,
-    })
+cg.register_craft = function(def) --Skaapdev add support to register custom craft for type.
+    reg_crafts[def.item] = {}
+    table.insert(reg_crafts[def.item], def)
+    --[[
+    Example definition of 4 cotton seeds as input that outputs 3 flour.
+    If you define a `metric`, you can use it as `craft.metric` from the `get_infotext` definition where you register your own cg.register_craft_type.
+    def: {
+        items = {
+                "farming:seed_cotton 4"
+        },
+        output = "farming:flour 3",
+        width = 0,
+        type = "basic_machines_grinding",
+        item = "farming:seed_cotton",
+        metric = 2
+   }
+   --]]
 end --Skaapdev end
 
 function cg.filter_items(player, filter)
