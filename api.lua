@@ -148,7 +148,7 @@ function cg.build_item_list()
 end
 
 cg.register_craft = function(def) --Skaapdev add support to register custom craft for type.
-    reg_crafts[def.item] = {}
+    reg_crafts[def.item] = reg_crafts[def.item] or {}
     table.insert(reg_crafts[def.item], def)
     --[[
     Example definition of 4 cotton seeds as input that outputs 3 flour.
@@ -160,7 +160,7 @@ cg.register_craft = function(def) --Skaapdev add support to register custom craf
         output = "farming:flour 3",
         width = 0,
         type = "basic_machines_grinding",
-        item = "farming:seed_cotton",
+        item = "farming:flour",
         metric = 2
    }
    --]]
