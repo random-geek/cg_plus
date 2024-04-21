@@ -24,22 +24,31 @@ function cg.update_selected_item(player, context, item, force)
     context.cg_auto_menu = false
 end
 
-local function make_item_button(formspec, x, y, size, name)
-    if name and name ~= "" then
-        local groups, buttonText
+local function make_item_button(formspec, x, y, size, itemstring)
+    if itemstring and itemstring ~= "" then
+        local itemName = itemstring:match("^%S+") -- Remove quantity, etc. Note: may be a group item.
 
-        if name:sub(1, 6) == "group:" then
-            groups = name:sub(7):split(",")
+        local groups, shownItem, buttonID, buttonText
+        if itemName:sub(1, 6) == "group:" then
+            local groupString = itemName:sub(7)
+            groups = groupString:split(",")
+            if #groups == 1 then
+                shownItem = cg.group_stereotypes[groups[1]] or ""
+            elseif #groups > 1 then
+                shownItem = cg.group_stereotypes[groupString] or ""
+            end
+            -- shownItem = (cg.group_stereotypes[groupString] or cg.group_stereotypes[groups[1]]) or ""
+            buttonID = itemName:gsub(",", "/")
             buttonText = #groups == 1 and "G" or ("G " .. #groups)
-            name = name:gsub(",", "/")
+        else
+            shownItem = itemstring
+            buttonID = itemName
+            buttonText = ""
         end
 
         formspec[#formspec + 1] = string.format(
             "item_image_button[%.2f,%.2f;%.2f,%.2f;%s;cgitem_%s;%s]",
-            x, y, size, size,
-            groups and (cg.group_stereotypes[groups[1]] or "") or name,
-            name:match("^%S+"), -- Keep only the item name, not the quantity.
-            buttonText or ""
+            x, y, size, size, shownItem, buttonID, buttonText
         )
 
         if groups then
@@ -56,8 +65,7 @@ local function make_item_button(formspec, x, y, size, name)
                 ))
             end
 
-            formspec[#formspec + 1] = string.format("tooltip[cgitem_%s;%s]",
-                    name, tooltipText)
+            formspec[#formspec + 1] = string.format("tooltip[cgitem_%s;%s]", buttonID, tooltipText)
         end
     else
         formspec[#formspec + 1] = string.format(
@@ -147,7 +155,7 @@ local function make_craft_preview(formspec, player, context)
     end
 
     local craft = cg.parse_craft(crafts[context.cg_craft_page + 1])
-    local template = cg.craft_types[craft.type] or {}
+    local template = cg.craft_methods[craft.method] or {}
 
     -- Auto-crafting buttons
     if cg.AUTOCRAFTING and template.uses_crafting_grid then
@@ -184,11 +192,9 @@ local function make_craft_preview(formspec, player, context)
         end
     end
 
-    -- Craft type/info text
-    formspec[#formspec + 1] = string.format("label[6.7,1.8;%s]",
-            template.description or "")
-    formspec[#formspec + 1] = string.format("label[6.7,2.4;%s]",
-            craft.infotext or "")
+    -- Craft method/infotext
+    formspec[#formspec + 1] = string.format("label[6.7,1.8;%s]", F(template.description) or "")
+    formspec[#formspec + 1] = string.format("label[6.7,2.4;%s]", F(craft.infotext) or "")
 
     -- Draw craft item grid, feat. maths.
 
@@ -265,8 +271,8 @@ local function page_on_player_receive_fields(self, player, context, fields)
             local crafts = cg.crafts[context.cg_selected_item] or {}
             local craft = crafts[context.cg_craft_page + 1]
 
-            if craft and cg.craft_types[craft.type]
-                    and cg.craft_types[craft.type].uses_crafting_grid then
+            if craft and cg.craft_methods[craft.method]
+                    and cg.craft_methods[craft.method].uses_crafting_grid then
                 context.cg_auto_menu = true
                 context.cg_auto_max = cg.auto_get_craftable(player, craft)
             end
@@ -279,6 +285,7 @@ local function page_on_player_receive_fields(self, player, context, fields)
                 local item = string.sub(field, 8)
 
                 if item:sub(1, 6) == "group:" then
+                    item = item:gsub("/", ",")
                     if cg.GROUP_SEARCH then
                         cg.update_filter(player, context, item)
                         cg.update_selected_item(player, context, nil)

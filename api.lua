@@ -1,5 +1,7 @@
 -- TODO: aliases?
 
+local custom_crafts = {}
+
 local function get_drops(item, def)
     local normalDrops = {}
     local randomDrops = {}
@@ -55,18 +57,65 @@ local function get_drops(item, def)
     return normalDrops, randomDrops
 end
 
+local function build_group_stereotypes_list()
+    -- Remember: Some group stereotypes are already registered
+    local startTime = minetest.get_us_time()
+    local usedMultiGroups = {}
+
+    for _, recipes in pairs(cg.crafts) do
+    for _, recipe in ipairs(recipes) do
+    for _, item in ipairs(recipe.items) do
+        if item:sub(1, 6) == "group:" then
+            local groupsString = item:sub(7)
+            local groupsTable = groupsString:split(",")
+            if #groupsTable > 1 then
+                usedMultiGroups[groupsString] = groupsTable
+            end
+        end
+    end
+    end
+    end
+
+    for _, item in ipairs(cg.items_all.list) do
+        local groups = minetest.registered_items[item].groups
+
+        for group, _ in pairs(groups) do
+            if cg.group_stereotypes[group] == nil then
+                cg.group_stereotypes[group] = item
+            end
+        end
+
+        for clusterString, clusterTable in pairs(usedMultiGroups) do
+            if cg.group_stereotypes[clusterString] == nil then
+                local match = true
+                for _, group in ipairs(clusterTable) do
+                    if not groups[group] then
+                        match = false
+                        break
+                    end
+                end
+                if match then
+                    cg.group_stereotypes[clusterString] = item
+                end
+            end
+        end
+    end
+
+    minetest.log("info", string.format("[cg_plus] Finished building group stereotype list in %.3f s.",
+        (minetest.get_us_time() - startTime) / 1000000))
+end
+
 function cg.build_item_list()
     local startTime = minetest.get_us_time()
     cg.items_all.list = {}
 
     for item, def in pairs(minetest.registered_items) do
         if def.description and def.description ~= ""
-                and minetest.get_item_group(item,
-                        "not_in_creative_inventory") == 0
-                and minetest.get_item_group(item,
-                        "not_in_craft_guide") == 0 then
+                and minetest.get_item_group(item, "not_in_creative_inventory") == 0
+                and minetest.get_item_group(item, "not_in_craft_guide") == 0 then
             table.insert(cg.items_all.list, item)
             cg.crafts[item] = minetest.get_all_craft_recipes(item) or {}
+            table.insert_all(cg.crafts[item], custom_crafts[item] or {})
         end
     end
 
@@ -83,7 +132,7 @@ function cg.build_item_list()
 
         if fuel.time > 0 then
             table.insert(cg.crafts[item], {
-                type = "fuel",
+                method = "fuel",
                 items = {item},
                 output = decremented.items[1]:to_string(),
                 time = fuel.time,
@@ -96,7 +145,7 @@ function cg.build_item_list()
             for dItem, dCount in pairs(normalDrops) do
                 if cg.crafts[dItem] then
                     table.insert(cg.crafts[dItem], {
-                        type = "digging",
+                        method = "digging",
                         width = 0,
                         items = {item},
                         output = ItemStack({
@@ -110,7 +159,7 @@ function cg.build_item_list()
             for dItem, dCount in pairs(randomDrops) do
                 if cg.crafts[dItem] then
                     table.insert(cg.crafts[dItem], {
-                        type = "digging_chance",
+                        method = "digging_chance",
                         width = 0,
                         items = {item},
                         output = ItemStack({
@@ -119,12 +168,6 @@ function cg.build_item_list()
                         }):to_string()
                     })
                 end
-            end
-        end
-
-        for group, _ in pairs(def.groups) do
-            if not cg.group_stereotypes[group] then
-                cg.group_stereotypes[group] = item
             end
         end
     end
@@ -138,6 +181,8 @@ function cg.build_item_list()
             (minetest.get_us_time() - startTime) / 1000000
         )
     )
+
+    build_group_stereotypes_list()
 end
 
 function cg.filter_items(player, filter)
@@ -192,56 +237,51 @@ function cg.filter_items(player, filter)
 end
 
 function cg.parse_craft(craft)
-    local type = craft.type
-    local template = cg.craft_types[type] or {}
-
-    if craft.width == 0 and template.alt_zero_width then
-        type = template.alt_zero_width
-        template = cg.craft_types[template.alt_zero_width] or {}
-    end
-
-    local newCraft = {
-        type = type,
-        items = {},
-        output = craft.output,
-    }
-
-    if template.get_infotext then
-        newCraft.infotext = template.get_infotext(craft) or ""
-    end
-
-    local width = math.max(craft.width or 0, 1)
-
-    if template.get_grid_size then
-        newCraft.grid_size = template.get_grid_size(craft)
+    local method
+    if craft.method == "normal" and craft.width == 0 then -- Special rules for shapeless recipes
+        method = "shapeless"
     else
-        newCraft.grid_size = {
-            x = width,
-            y = math.ceil(table.maxn(craft.items) / width)
-        }
+        method = craft.method
     end
 
-    if template.inherit_width then
-        -- For shapeless recipes, there is no need to modify the item list.
-        newCraft.items = craft.items
+    local template = cg.craft_methods[method] or {}
+
+    local gridSize = (template.get_grid_size and template.get_grid_size(craft)) or {x = 3, y = 3}
+    local width = craft.width or 0
+    local items = {}
+
+    if width == 0 then
+        -- Shapeless recipes
+        items = craft.items
     else
-        -- The craft's width is not always the same as the grid size, so items
-        -- need to be shifted around.
-        for idx, item in pairs(craft.items) do
-            newCraft.items[idx + (newCraft.grid_size.x - width) *
-                    math.floor((idx - 1) / width)] = item
+        -- The craft's width is not always the same as the grid size, so items need to be shifted around.
+        for i, item in pairs(craft.items) do
+            items[i + (gridSize.x - width) * math.floor((i - 1) / width)] = item
         end
     end
 
-    return newCraft
+    return {
+        method = method,
+        infotext = (template.get_infotext and template.get_infotext(craft)) or "",
+        grid_size = gridSize,
+        width = width,
+        items = items,
+        output = craft.output or "",
+    }
 end
 
 function cg.get_item_list(player)
     return cg.player_data[player:get_player_name()].items or cg.items_all
 end
 
-function cg.register_craft_type(name, def)
-    cg.craft_types[name] = def
+function cg.register_crafting_method(name, def)
+    cg.craft_methods[name] = def
+end
+
+function cg.register_craft(recipe, assign_to)
+    local item = ItemStack(assign_to or recipe.output):get_name() -- Removes quantity, etc. from itemstring
+    custom_crafts[item] = custom_crafts[item] or {}
+    table.insert(custom_crafts[item], recipe)
 end
 
 function cg.register_group_stereotype(group, item)
